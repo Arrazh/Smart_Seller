@@ -1,23 +1,27 @@
-<?php
-namespace App\Models;
+<?php 
 
-use Illuminate\Database\Eloquent\Model;
+namespace App\Models; 
 
-class Sale extends Model
-{
-    protected $fillable = [
-        'seller_id',
-        'qty_blackgarlic',
-        'qty_muliwater',
-        'category',
-        'total_price',
-        'tanggal',
-        'metode_pembayaran',
-        'status',
-    ];
+use Illuminate\Database\Eloquent\Model; 
 
-    public function seller()
-    {
-        return $this->belongsTo(Seller::class);
-    }
+class Sale extends Model 
+{ 
+    protected $fillable = 
+    [ 
+        'seller_id', 
+        'qty_blackgarlic_100g', 
+        'qty_blackgarlic_150g', 
+        'qty_muliwater_ph_tinggi', 
+        'qty_muliwater_ph9', 
+        'category', 
+        'total_price', 
+        'tanggal', 
+        'metode_pembayaran', 
+        'status', 
+    ]; 
+    
+    public function seller() 
+    { 
+        return $this->belongsTo(Seller::class); 
+    } 
 }

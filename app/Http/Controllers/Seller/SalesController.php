@@ -11,111 +11,163 @@ use App\Exports\SalesExport;
 
 class SalesController extends Controller
 {
-    // Form tambah penjualan
     public function create()
     {
-        $sellers = Seller::all();
-        return view('add_sales', compact('sellers'));
+        return view('add_sales', [
+            'sellers' => Seller::all(),
+            'mode' => 'create',
+            'sale' => null
+        ]);
     }
 
-    // Simpan penjualan baru
+    public function edit(Sale $sale)
+    {
+        return view('add_sales', [
+            'sellers' => Seller::all(),
+            'mode' => 'edit',
+            'sale' => $sale
+        ]);
+    }
+
+    public function destroy(Sale $sale)
+    {
+        $sale->delete();
+
+        return redirect()->back()
+            ->with('success', 'Data Penjualan Berhasil Dihapus!');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->delete_ids;
+        
+        if (!$ids || count($ids) === 0) {
+            return back()->with('error', 'Tidak ada data dipilih');
+        }
+
+        Sale::whereIn('id', $ids)->delete();
+
+        return redirect()
+            ->route('dbpenjualan')
+            ->with('success', count($ids).' data berhasil dihapus');
+    }
+
     public function store(Request $request)
     {
-        $request->validate([
-            'seller_id' => 'required|exists:sellers,id',
-            'qty_blackgarlic' => 'required|integer|min:0',
-            'qty_muliwater' => 'required|integer|min:0',
-            'metode_pembayaran' => 'required|in:cash,transfer,qris',
-            'status' => 'required|in:lunas,belum_lunas',
+        // Ensure quantity fields have default values of 0 if not provided
+        $request->merge([
+            'qty_blackgarlic_100g' => $request->qty_blackgarlic_100g ?? 0,
+            'qty_blackgarlic_150g' => $request->qty_blackgarlic_150g ?? 0,
+            'qty_muliwater_ph_tinggi' => $request->qty_muliwater_ph_tinggi ?? 0,
+            'qty_muliwater_ph9' => $request->qty_muliwater_ph9 ?? 0,
         ]);
 
-        // harga fix
-        $price_black = 35000;
-        $price_muli  = 37500;
+        $data = $this->validateData($request);
+        $data['total_price'] = $this->hitungTotal($request);
 
-        $total = ($request->qty_blackgarlic * $price_black) +
-                 ($request->qty_muliwater * $price_muli);
+        Sale::create($data);
 
-        Sale::create([
-            'seller_id' => $request->seller_id,
-            'qty_blackgarlic' => $request->qty_blackgarlic,
-            'qty_muliwater' => $request->qty_muliwater,
-            'total_price' => $total,
-            'category' => $request->category,
-            'tanggal' => $request->tanggal,
-            'metode_pembayaran' => $request->metode_pembayaran,
-            'status' => $request->status,
-        ]);
-
-        return back()->with('success', 'Penjualan berhasil ditambahkan!');
+        return redirect()
+            ->route('dbpenjualan')
+            ->with('success', 'Penjualan berhasil ditambahkan!');
     }
 
-    // Update status pembayaran
+    public function update(Request $request, Sale $sale)
+    {
+        // Ensure quantity fields have default values of 0 if not provided
+        $request->merge([
+            'qty_blackgarlic_100g' => $request->qty_blackgarlic_100g ?? 0,
+            'qty_blackgarlic_150g' => $request->qty_blackgarlic_150g ?? 0,
+            'qty_muliwater_ph_tinggi' => $request->qty_muliwater_ph_tinggi ?? 0,
+            'qty_muliwater_ph9' => $request->qty_muliwater_ph9 ?? 0,
+        ]);
+
+        $data = $this->validateData($request);
+        $data['total_price'] = $this->hitungTotal($request);
+
+        $sale->update($data);
+
+        return redirect()
+            ->route('dbpenjualan')
+            ->with('success', 'Penjualan berhasil diperbarui!');
+    }
+
     public function updateStatus(Request $request, Sale $sale)
     {
         $request->validate([
             'status' => 'required|in:lunas,belum_lunas'
         ]);
 
-        $sale->status = $request->status;
-        $sale->save([
+        $sale->update([
+            'status' => $request->status
         ]);
 
         return back()->with('success', 'Status berhasil diperbarui!');
     }
 
-    // Index dengan filter & search
     public function index(Request $request)
     {
         $query = Sale::with('seller');
 
-        // Filter range waktu
         if ($request->filled('range')) {
-            switch ($request->range) {
-                case '1hari':
-                    $query->whereDate('tanggal', now());
-                    break;
-                case '1minggu':
-                    $query->whereBetween('tanggal', [now()->subDays(6), now()]);
-                    break;
-                case '1bulan':
-                    $query->whereBetween('tanggal', [now()->subMonth(), now()]);
-                    break;
-            }
+            match ($request->range) {
+                '1hari' => $query->whereDate('tanggal', now()),
+                '1minggu' => $query->whereBetween('tanggal', [now()->subDays(6), now()]),
+                '1bulan' => $query->whereBetween('tanggal', [now()->subMonth(), now()]),
+                default => null
+            };
         }
 
-        // Filter kategori
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
-        // Filter metode pembayaran
         if ($request->filled('metode')) {
             $query->where('metode_pembayaran', $request->metode);
         }
 
-        // Filter status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Search nama seller
         if ($request->filled('search')) {
-            $query->whereHas('seller', function($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->search.'%');
+            $query->whereHas('seller', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%');
             });
         }
 
-        $sales = $query->latest()->get();
-
-        // Ambil semua kategori unik untuk dropdown
-        $categories = Sale::select('category')->distinct()->pluck('category');
-
-        return view('dbpenjualan', compact('sales', 'categories', 'request'));
+        return view('dbpenjualan', [
+            'sales' => $query->latest()->get(),
+            'categories' => Sale::select('category')->distinct()->pluck('category'),
+            'request' => $request
+        ]);
     }
 
     public function export(Request $request)
     {
         return Excel::download(new SalesExport($request), 'db_penjualan.xlsx');
+    }
+
+    private function validateData(Request $request)
+    {
+        return $request->validate([
+            'tanggal' => 'required|date',
+            'seller_id' => 'required|exists:sellers,id',
+            'qty_blackgarlic_100g' => 'required|integer|min:0',
+            'qty_blackgarlic_150g' => 'required|integer|min:0',
+            'qty_muliwater_ph_tinggi' => 'required|integer|min:0',
+            'qty_muliwater_ph9' => 'required|integer|min:0',
+            'category' => 'required|string',
+            'metode_pembayaran' => 'required|in:cash,transfer,qris',
+            'status' => 'required|in:lunas,belum_lunas',
+        ]);
+    }
+
+    private function hitungTotal(Request $request)
+    {
+        return ($request->qty_blackgarlic_100g * 35000)
+             + ($request->qty_blackgarlic_150g * 52500)
+             + ($request->qty_muliwater_ph_tinggi * 37500)
+             + ($request->qty_muliwater_ph9 * 42500);
     }
 }

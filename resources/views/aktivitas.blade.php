@@ -25,20 +25,23 @@
         /* SIDEBAR GRADASI */
         .sidebar {
             width: 260px;
-            background: linear-gradient(180deg, #1e3a8a 0%, #7c3aed 100%);
+            background: linear-gradient(180deg, #1e3a8a, #7c3aed);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 40px 0;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
         }
 
         .sidebar h2 {
-            font-weight: 700;
+            margin-bottom: 40px;
             font-size: 1.6rem;
+            font-weight: 700;
             color: #fff;
-            margin-bottom: 50px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
         .menu {
@@ -69,6 +72,7 @@
             padding: 50px;
             background: #ffffff;
             overflow-y: auto;
+            margin-left: 260px;
         }
 
         .content h1 {
@@ -113,10 +117,15 @@
         }
 
         /* TABLE */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            min-width: 800px;
         }
 
         thead {
@@ -196,67 +205,73 @@
         </form>     
 
         <!-- TABEL -->
-        <table>
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>Product Knowledge</th>
-                    <th>Skema Penjualan</th>
-                    <th>MoU</th>
-                    <th>Black Garlic</th>
-                    <th>Muli Water</th>
-                </tr>
-            </thead>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="min-width: 200px;">Nama</th>
+                        <th>Product Knowledge</th>
+                        <th>Skema Penjualan</th>
+                        <th>MoU</th>
+                        <th>Black Garlic 100g</th>
+                        <th>Black Garlic 150g</th>
+                        <th>Muli Water pH Tinggi</th>
+                        <th>Muli Water pH 9+</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                @foreach ($sellers as $seller)
-            
-                <tr>
-                    <td>{{ $seller->name }}</td>
-                    <td style="text-align:center;">
-                        <input type="checkbox"
-                            onchange="document.getElementById('pk-{{ $seller->id }}').submit()"
-                            {{ $seller->product_knowledge ? 'checked' : '' }}>
-                        
-                        <form id="pk-{{ $seller->id }}" 
-                            action="{{ route('seller.toggle', [$seller->id, 'product_knowledge']) }}" 
-                            method="POST" style="display:none;">
-                            @csrf
-                            @method('PATCH')
-                        </form>
-                    </td>
+                <tbody>
+                    @foreach ($sellers as $seller)
+                
+                    <tr>
+                        <td>{{ $seller->name }}</td>
+                        <td style="text-align:center;">
+                            <input type="checkbox"
+                                onchange="document.getElementById('pk-{{ $seller->id }}').submit()"
+                                {{ $seller->product_knowledge ? 'checked' : '' }}>
+                            
+                            <form id="pk-{{ $seller->id }}" 
+                                action="{{ route('seller.toggle', [$seller->id, 'product_knowledge']) }}" 
+                                method="POST" style="display:none;">
+                                @csrf
+                                @method('PATCH')
+                            </form>
+                        </td>
 
-                    <td style="text-align:center;">
-                        <input type="checkbox"
-                            onchange="document.getElementById('sp-{{ $seller->id }}').submit()"
-                            {{ $seller->skema_penjualan ? 'checked' : '' }}>
-                        
-                        <form id="sp-{{ $seller->id }}" 
-                            action="{{ route('seller.toggle', [$seller->id, 'skema_penjualan']) }}" 
-                            method="POST" style="display:none;">
-                            @csrf
-                            @method('PATCH')
-                        </form>
-                    </td>
+                        <td style="text-align:center;">
+                            <input type="checkbox"
+                                onchange="document.getElementById('sp-{{ $seller->id }}').submit()"
+                                {{ $seller->skema_penjualan ? 'checked' : '' }}>
+                            
+                            <form id="sp-{{ $seller->id }}" 
+                                action="{{ route('seller.toggle', [$seller->id, 'skema_penjualan']) }}" 
+                                method="POST" style="display:none;">
+                                @csrf
+                                @method('PATCH')
+                            </form>
+                        </td>
 
-                    <td style="text-align:center;">
-                        <input type="checkbox"
-                            onchange="document.getElementById('mou-{{ $seller->id }}').submit()"
-                            {{ $seller->mou ? 'checked' : '' }}>
-                        
-                        <form id="mou-{{ $seller->id }}" 
-                            action="{{ route('seller.toggle', [$seller->id, 'mou']) }}" 
-                            method="POST" style="display:none;">
-                            @csrf
-                            @method('PATCH')
-                        </form>
-                    </td>
-                    <td style="text-align:center;">Rp 35.000</td>
-                    <td style="text-align:center;">Rp 37.500</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                        <td style="text-align:center;">
+                            <input type="checkbox"
+                                onchange="document.getElementById('mou-{{ $seller->id }}').submit()"
+                                {{ $seller->mou ? 'checked' : '' }}>
+                            
+                            <form id="mou-{{ $seller->id }}" 
+                                action="{{ route('seller.toggle', [$seller->id, 'mou']) }}" 
+                                method="POST" style="display:none;">
+                                @csrf
+                                @method('PATCH')
+                            </form>
+                        </td>
+                        <td style="text-align:center;">Rp 35.000</td>
+                        <td style="text-align:center;">Rp 52.500</td>
+                        <td style="text-align:center;">Rp 37.500</td>
+                        <td style="text-align:center;">Rp 42.500</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
     </div>
 

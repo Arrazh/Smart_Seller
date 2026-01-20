@@ -192,96 +192,122 @@ input:hover, select:hover {
 
 <div class="sidebar">
     <h2>Smart Seller</h2>
-
     <div class="menu">
-        <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
-        <a href="{{ route('aktivitas') }}" class="{{ request()->routeIs('aktivitas') ? 'active' : '' }}">Aktivitas Seller</a>
-        <a href="{{ route('dbpenjualan') }}" class="{{ request()->routeIs('dbpenjualan') ? 'active' : '' }}">Database Penjualan</a>
+        <a href="{{ route('dashboard') }}">Dashboard</a>
+        <a href="{{ route('aktivitas') }}">Aktivitas Seller</a>
+        <a href="{{ route('dbpenjualan') }}" class="active">Database Penjualan</a>
     </div>
-
-    <a href="#" class="logout-btn">Logout</a>
 </div>
 
 <div class="content">
+    <h1>{{ $mode === 'edit' ? 'Edit Penjualan' : 'Input Penjualan' }}</h1>
 
-    <h1>Input Penjualan</h1>
-
-    <div class="back-wrapper">
+    <div class="back-wrapper" style="margin-bottom:25px;">
         <a href="{{ route('dbpenjualan') }}" class="btn-back">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 6L9 12L15 18" stroke="white" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15 6L9 12L15 18" stroke="white" stroke-width="2"stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </a>
     </div>
 
-    <form action="{{ route('seller.sales.store') }}" method="POST">
+    <form method="POST"
+        action="{{ $mode === 'edit'
+            ? route('seller.sales.update', $sale->id)
+            : route('seller.sales.store') }}">
         @csrf
+        @if($mode === 'edit')
+            @method('PUT')
+        @endif
 
         <div class="form-group">
             <label>Tanggal</label>
-            <input type="date" name="tanggal" required placeholder="Pilih tanggal">
+            <input type="date" name="tanggal"
+                value="{{ old('tanggal', $sale->tanggal ?? '') }}" required>
         </div>
 
         <div class="form-group">
-            <label>Pilih Seller</label>
+            <label>Seller</label>
             <select name="seller_id" required>
                 <option value="">-- Pilih Seller --</option>
-                @foreach ($sellers as $seller)
-                    <option value="{{ $seller->id }}">{{ $seller->name }}</option>
+                @foreach($sellers as $seller)
+                    <option value="{{ $seller->id }}"
+                        {{ old('seller_id', $sale->seller_id ?? '') == $seller->id ? 'selected' : '' }}>
+                        {{ $seller->name }}
+                    </option>
                 @endforeach
             </select>
         </div>
 
         <div class="form-group">
-            <label>Black Garlic (Rp 35.000)</label>
-            <input type="number" name="qty_blackgarlic" min="0" required placeholder="Masukkan jumlah">
+            <label>Black Garlic 100g (35.000)</label>
+            <input type="number" name="qty_blackgarlic_100g" min="0"
+                value="{{ old('qty_blackgarlic_100g', $sale->qty_blackgarlic_100g ?? 0) }}" required>
         </div>
 
         <div class="form-group">
-            <label>Muli Water (Rp 37.500)</label>
-            <input type="number" name="qty_muliwater" min="0" required placeholder="Masukkan jumlah">
+            <label>Black Garlic 150g (52.500)</label>
+            <input type="number" name="qty_blackgarlic_150g" min="0"
+                value="{{ old('qty_blackgarlic_150g', $sale->qty_blackgarlic_150g ?? 0) }}" required>
         </div>
 
         <div class="form-group">
-            <label>Kategori Pembeli</label>
+            <label>Muli Water pH Tinggi (37.500)</label>
+            <input type="number" name="qty_muliwater_ph_tinggi" min="0"
+                value="{{ old('qty_muliwater_ph_tinggi', $sale->qty_muliwater_ph_tinggi ?? 0) }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Muli Water pH 9+ (42.500)</label>
+            <input type="number" name="qty_muliwater_ph9" min="0"
+                value="{{ old('qty_muliwater_ph9', $sale->qty_muliwater_ph9 ?? 0) }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Kategori</label>
             <select name="category" required>
-                <option value="Dosen">Dosen</option>
-                <option value="Perusahaan">Perusahaan</option>
-                <option value="Alumni">Alumni</option>
-                <option value="Penjualan Online">Penjualan Online</option>
-                <option value="Koperasi">Koperasi</option>
-                <option value="Karyawan">Karyawan</option>
-                <option value="Agen Baru Karyawan">Agen Baru Karyawan</option>
-                <option value="Mitra Komunitas">Mitra Komunitas</option>
-                <option value="Mitra Sekolah">Mitra Sekolah</option>
-                <option value="Mahasiswa">Mahasiswa</option>
-                <option value="Mitra Pemerintah">Mitra Pemerintah</option>
-                <option value="Mitra PLJ">Mitra PLJ</option>
+                @foreach([
+                    'Dosen','Perusahaan','Alumni','Penjualan Online','Koperasi',
+                    'Karyawan','Agen Baru Karyawan','Mitra Komunitas','Mitra Sekolah',
+                    'Mahasiswa','Mitra Pemerintah','Mitra PLJ'
+                ] as $cat)
+                    <option value="{{ $cat }}"
+                        {{ old('category', $sale->category ?? '') == $cat ? 'selected' : '' }}>
+                        {{ $cat }}
+                    </option>
+                @endforeach
             </select>
         </div>
 
         <div class="form-group">
             <label>Metode Pembayaran</label>
             <select name="metode_pembayaran" required>
-                <option value="cash">Cash</option>
-                <option value="transfer">Transfer Bank</option>
-                <option value="qris">QRIS</option>
+                @foreach(['cash','transfer','qris'] as $m)
+                    <option value="{{ $m }}"
+                        {{ old('metode_pembayaran', $sale->metode_pembayaran ?? '') == $m ? 'selected' : '' }}>
+                        {{ strtoupper($m) }}
+                    </option>
+                @endforeach
             </select>
         </div>
-        
+
         <div class="form-group">
-            <label>Status Pembayaran</label>
+            <label>Status</label>
             <select name="status" required>
-            <option value="">Pilih Status</option>
-            <option value="lunas">Lunas</option>
-            <option value="belum_lunas">Belum Lunas</option>
+                <option value="lunas"
+                    {{ old('status', $sale->status ?? '') == 'lunas' ? 'selected' : '' }}>
+                    Lunas
+                </option>
+                <option value="belum_lunas"
+                    {{ old('status', $sale->status ?? '') == 'belum_lunas' ? 'selected' : '' }}>
+                    Belum Lunas
+                </option>
             </select>
         </div>
 
-        <button type="submit" class="btn-submit">Simpan Penjualan</button>
+        <button type="submit" class="btn-submit">
+            {{ $mode === 'edit' ? 'Update Penjualan' : 'Simpan Penjualan' }}
+        </button>
     </form>
-
 </div>
 
 </body>

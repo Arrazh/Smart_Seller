@@ -27,17 +27,24 @@ class SellersExport implements FromCollection, WithHeadings
                   ->orWhere('id_seller', 'LIKE', "%$search%");
         }
 
-        return $query->select(
-            'id_seller',
-            'name',
-            'alamat',
-            'domisili',
-            'no_telpon',
-            'product_knowledge',
-            'skema_penjualan',
-            'mou'
-        )->get();
-    }
+
+    return $query->get()->map(function ($seller) {
+        return [
+            $seller->id_seller,
+            $seller->name,
+            $seller->alamat,
+            $seller->domisili,
+            $seller->no_telpon,
+            $seller->product_knowledge ? 'YA' : 'TIDAK',
+            $seller->skema_penjualan ? 'YA' : 'TIDAK',
+            $seller->mou ? 'YA' : 'TIDAK',
+            35000,
+            52500,
+            37500,
+            42500,
+        ];
+    });
+}
 
     public function headings(): array
     {
@@ -50,6 +57,10 @@ class SellersExport implements FromCollection, WithHeadings
             'Product Knowledge',
             'Skema Penjualan',
             'MoU',
+            'Black Garlic 100g',
+            'Black Garlic 150g',
+            'Muli Water pH Tinggi',
+            'Muli Water pH 9+'
         ];
-    }
+    }                                                                                       
 }   

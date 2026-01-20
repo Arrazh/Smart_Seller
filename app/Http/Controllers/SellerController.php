@@ -63,9 +63,21 @@ class SellerController extends Controller
 
         return back();
     }
-    public function data()
+    public function data(Request $request)
     {
-        $sellers = Seller::all();
+        $query = Seller::query();
+
+        if($request->filled('search')) {
+            $search = $request->search;
+            
+            $query->where('name', 'LIKE', "%$search%")
+                  ->orWhere('id_seller', 'LIKE', "%$search%")
+                  ->orWhere('alamat', 'LIKE', "%$search%")
+                  ->orWhere('domisili', 'LIKE', "%$search%");
+        }   
+
+        $sellers = $query->get();
+
         return view('data_seller', compact('sellers'));
     }
 
@@ -78,4 +90,44 @@ class SellerController extends Controller
     {
         return Excel::download(new \App\Exports\DataSellerExport, 'data_seller.xlsx');
     }
-}   
+
+    public function destroy(Seller $seller)
+    {
+        $seller->delete();
+        return redirect()->route('data.seller')->with('success', 'Seller berhasil dihapus');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->delete_ids;
+        if (!$ids || count($ids) == 0) {
+            return redirect()->route('data.seller')->with('error', 'Pilih seller yang akan dihapus');
+        }
+
+        Seller::whereIn('id', $ids)->delete();
+        return redirect()->route('data.seller')->with('success', count($ids) . ' seller berhasil dihapus');
+    }
+
+    public function edit(Seller $seller)
+    {
+        return view('edit_seller', compact('seller'));
+    }
+
+    public function update(Request $request, Seller $seller)
+    {
+        $request->validate([
+            'name' => 'required',
+            'id_seller' => 'required|unique:sellers,id_seller,' . $seller->id,
+        ]);
+
+        $seller->update([
+            'name' => $request->name,
+            'id_seller' => $request->id_seller,
+            'alamat' => $request->alamat,
+            'domisili' => $request->domisili,
+            'no_telpon' => $request->no_telpon,
+        ]);
+
+        return redirect()->route('data.seller')->with('success', 'Seller berhasil diupdate');
+    }
+}
