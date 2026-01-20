@@ -18,10 +18,10 @@ return new class extends Migration
             $table->string('alamat')->nullable();
             $table->string('domisili')->nullable();
             $table->string('no_telpon')->nullable();
-            $table->Integer('black_garlic_100g')->default(35000);
-            $table->Integer('black_garlic_150g')->default(52500);
-            $table->Integer('muliwater_ph_tinggi')->default(37500);
-            $table->Integer('muliwater_ph9')->default(42500);
+            $table->decimal('black_garlic_100g', 10, 2)->default(35000);
+            $table->decimal('black_garlic_150g', 10, 2)->default(52500);
+            $table->decimal('muliwater_ph_tinggi', 10, 2)->default(37500);
+            $table->decimal('muliwater_ph9', 10, 2)->default(42500);
             $table->timestamps();
         });
     }
